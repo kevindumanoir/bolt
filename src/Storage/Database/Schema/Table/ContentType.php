@@ -25,7 +25,7 @@ class ContentType extends BaseTable
         'templateselect' => 'columnStringNormal',
         'file'           => 'columnStringNormal',
         // String, 128, not null, empty default
-        'slug'           => 'columnStringNotNull',
+        'slug'           => 'columnStringNormal',
         // Text, platform default size
         'hidden'         => 'columnText',
         'html'           => 'columnText',
@@ -52,7 +52,7 @@ class ContentType extends BaseTable
     {
         // @codingStandardsIgnoreStart
         $this->table->addColumn('id',             'integer',    ['autoincrement' => true]);
-        $this->table->addColumn('slug',           'string',     ['length' => 128]);
+        $this->table->addColumn('slug',           'string',     ['length' => 256]);
         $this->table->addColumn('datecreated',    'datetime',   []);
         $this->table->addColumn('datechanged',    'datetime',   []);
         $this->table->addColumn('datepublish',    'datetime',   ['notnull' => false]);
