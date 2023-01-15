@@ -134,6 +134,11 @@ class Save
         return $this->saveContentRecord($content, $oldContent, $contentType, $new, $comment, $returnTo, $editReferrer);
     }
 
+    protected function allowedContentStatuses(): array
+    {
+        return ['published', 'timed', 'held', 'draft'];
+    }
+
     /**
      * Check whether the status is allowed.
      *
@@ -185,7 +190,7 @@ class Save
         // Hack … remove soon
         $formValues += ['status' => 'draft'];
         // Make sure we have a proper status.
-        if (!in_array($formValues['status'], ['published', 'timed', 'held', 'draft'])) {
+        if (!in_array($formValues['status'], $this->allowedContentStatuses())) {
             if ($status = $content->getStatus()) {
                 $formValues['status'] = $status;
             } else {
