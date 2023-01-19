@@ -7,6 +7,7 @@ use Bolt\Filesystem\Manager;
 use Bolt\Form\Resolver;
 use Bolt\Logger\FlashLoggerInterface;
 use Bolt\Storage\Entity\Content;
+use Bolt\Storage\Entity\ContentStatusStrategyInterface;
 use Bolt\Storage\Entity\Relations;
 use Bolt\Storage\Entity\TemplateFields;
 use Bolt\Storage\EntityManager;
@@ -41,16 +42,19 @@ class Edit
     protected $loggerSystem;
     /** @var FlashLoggerInterface */
     protected $loggerFlash;
+    /** @var ContentStatusStrategyInterface */
+    protected $contentStatusStrategy;
 
     /**
      * Constructor function.
      *
-     * @param EntityManager        $em
-     * @param Config               $config
-     * @param Users                $users
-     * @param Manager              $filesystem
-     * @param LoggerInterface      $loggerSystem
+     * @param EntityManager $em
+     * @param Config $config
+     * @param Users $users
+     * @param Manager $filesystem
+     * @param LoggerInterface $loggerSystem
      * @param FlashLoggerInterface $loggerFlash
+     * @param ContentStatusStrategyInterface $contentStatusStrategy
      */
     public function __construct(
         EntityManager $em,
@@ -58,7 +62,8 @@ class Edit
         Users $users,
         Manager $filesystem,
         LoggerInterface $loggerSystem,
-        FlashLoggerInterface $loggerFlash
+        FlashLoggerInterface $loggerFlash,
+        ContentStatusStrategyInterface $contentStatusStrategy
     ) {
         $this->em = $em;
         $this->config = $config;
@@ -66,6 +71,7 @@ class Edit
         $this->filesystem = $filesystem;
         $this->loggerSystem = $loggerSystem;
         $this->loggerFlash = $loggerFlash;
+        $this->contentStatusStrategy = $contentStatusStrategy;
     }
 
     /**
@@ -94,7 +100,7 @@ class Edit
         $contentTypeSlug = $contentType['slug'];
         $new = $content->getId() === null ?: false;
         $oldStatus = $content->getStatus();
-        $allStatuses = ['published', 'held', 'draft', 'timed'];
+        $allStatuses = $this->contentStatusStrategy->allStatuses();
         $allowedStatuses = [];
 
         foreach ($allStatuses as $status) {

@@ -235,7 +235,8 @@ class StorageServiceProvider implements ServiceProviderInterface
                     $app['users'],
                     $app['filesystem'],
                     $app['logger.system'],
-                    $app['logger.flash']
+                    $app['logger.flash'],
+                    $app['storage.content_status_strategy']
                 );
                 // @deprecated Temporary and to be removed circa Bolt 3.5.
                 $cr->setQueryHandler($app['query']);
@@ -275,6 +276,7 @@ class StorageServiceProvider implements ServiceProviderInterface
                     $app['logger.system'],
                     $app['logger.flash'],
                     $app['url_generator.lazy'],
+                    $app['storage.content_status_strategy'],
                     $app['slugify']
                 );
 
@@ -318,6 +320,12 @@ class StorageServiceProvider implements ServiceProviderInterface
                 $strategy = new NamingStrategy($app['config']->get('general/database/prefix', null));
 
                 return $strategy;
+            }
+        );
+
+        $app['storage.content_status_strategy'] = $app->share(
+            function () {
+                return new Entity\ContentStatusStrategy();
             }
         );
     }

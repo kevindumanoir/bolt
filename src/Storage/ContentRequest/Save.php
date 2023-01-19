@@ -10,6 +10,7 @@ use Bolt\Helpers\Str;
 use Bolt\Logger\FlashLoggerInterface;
 use Bolt\Storage\Collection;
 use Bolt\Storage\Entity;
+use Bolt\Storage\Entity\ContentStatusStrategyInterface;
 use Bolt\Storage\EntityManager;
 use Bolt\Storage\Mapping\ContentType;
 use Bolt\Translation\Translator as Trans;
@@ -48,20 +49,23 @@ class Save
     protected $loggerFlash;
     /** @var UrlGeneratorInterface */
     protected $urlGenerator;
+    /** @var Entity\ContentStatusStrategyInterface */
+    protected $contentStatusStrategy;
     /** @var SlugifyInterface */
     private $slugify;
 
     /**
      * Constructor function.
      *
-     * @param EntityManager         $em
-     * @param Config                $config
-     * @param Users                 $users
-     * @param LoggerInterface       $loggerChange
-     * @param LoggerInterface       $loggerSystem
-     * @param FlashLoggerInterface  $loggerFlash
+     * @param EntityManager $em
+     * @param Config $config
+     * @param Users $users
+     * @param LoggerInterface $loggerChange
+     * @param LoggerInterface $loggerSystem
+     * @param FlashLoggerInterface $loggerFlash
      * @param UrlGeneratorInterface $urlGenerator
-     * @param SlugifyInterface      $slugify
+     * @param ContentStatusStrategyInterface $contentStatusStrategy
+     * @param SlugifyInterface|null $slugify
      */
     public function __construct(
         EntityManager $em,
@@ -71,6 +75,7 @@ class Save
         LoggerInterface $loggerSystem,
         FlashLoggerInterface $loggerFlash,
         UrlGeneratorInterface $urlGenerator,
+        ContentStatusStrategyInterface $contentStatusStrategy,
         SlugifyInterface $slugify = null
     ) {
         $this->em = $em;
@@ -80,6 +85,7 @@ class Save
         $this->loggerSystem = $loggerSystem;
         $this->loggerFlash = $loggerFlash;
         $this->urlGenerator = $urlGenerator;
+        $this->contentStatusStrategy = $contentStatusStrategy;
         $this->slugify = $slugify;
     }
 
@@ -111,7 +117,7 @@ class Save
         } else {
             $content = $repo->create(['contenttype' => $contentTypeSlug, 'status' => $contentType['default_status']]);
             $oldContent = null;
-            $oldStatus = 'draft';
+            $oldStatus = $this->contentStatusStrategy->fallbackStatus();
         }
 
         // Don't allow spoofing the ID.
@@ -132,11 +138,6 @@ class Save
 
         // Save the record
         return $this->saveContentRecord($content, $oldContent, $contentType, $new, $comment, $returnTo, $editReferrer);
-    }
-
-    protected function allowedContentStatuses(): array
-    {
-        return ['published', 'timed', 'held', 'draft'];
     }
 
     /**
@@ -188,13 +189,13 @@ class Save
         }
 
         // Hack … remove soon
-        $formValues += ['status' => 'draft'];
+        $formValues += ['status' => $this->contentStatusStrategy->fallbackStatus()];
         // Make sure we have a proper status.
-        if (!in_array($formValues['status'], $this->allowedContentStatuses())) {
+        if (!in_array($formValues['status'], $this->contentStatusStrategy->allStatuses())) {
             if ($status = $content->getStatus()) {
                 $formValues['status'] = $status;
             } else {
-                $formValues['status'] = 'draft';
+                $formValues['status'] = $this->contentStatusStrategy->fallbackStatus();
             }
         }
 
